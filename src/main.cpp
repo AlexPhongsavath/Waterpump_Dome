@@ -47,14 +47,6 @@ void connectWifi() {
   }
   else
   {
-
-    WiFi.begin(WiFi.SSID().c_str(), WiFi.psk().c_str());
-
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.println("Connecting to WiFi..");
-    digitalWrite(wifiLed, LOW);
-  }
      Serial.print("Connected to WiFi: ");
      digitalWrite(wifiLed, HIGH);
      Serial.println(WiFi.SSID());
@@ -125,20 +117,20 @@ void MQTTcallback(char* topic, byte* payload, unsigned int length) {
 
       if ( hour() == 6 ){
     if (minute() >= 0 && minute() < 2){
-      digitalWrite(Relay, LOW);
+      digitalWrite(Relay, HIGH);
       }
     else {
-    digitalWrite(Relay, HIGH);
+    digitalWrite(Relay, LOW);
     total = 0;
     }
 }
 
   if ( hour() == 17 ){
     if (minute() >= 30 && minute() < 32){
-      digitalWrite(Relay, LOW);
+      digitalWrite(Relay, HIGH);
       }
   else {
-    digitalWrite(Relay, HIGH);
+    digitalWrite(Relay, LOW);
     total = 0;
   }
 }
