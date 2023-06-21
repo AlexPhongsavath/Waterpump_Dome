@@ -14,7 +14,8 @@ static const char ntpServerName[] = "us.pool.ntp.org";
 unsigned int localPort = 8888;
 
 // config mqtt
-const char* mqttServer = "broker.hivemq.com";
+const char* mqttServer = "202.137.130.47";
+//const char *mqtt_server = "202.137.130.47";
 const char *mqttUser = "mrcadmin";
 const char *mqttPass = "mrcAdmin@2023";
 const int mqttPort = 1883;

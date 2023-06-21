@@ -27,6 +27,9 @@ time_t getNtpTime();
 void digitalClockDisplay();
 void printDigits(int digits);
 void sendNTPpacket(IPAddress &address);
+void MQTTcallback(char* topic, byte* payload, unsigned int length);
+ICACHE_RAM_ATTR void increase();
+
 
 
 String macToStr(const uint8_t* mac) {
@@ -41,9 +44,11 @@ String macToStr(const uint8_t* mac) {
 
 void connectWifi() {
   res = wm.autoConnect(ssid, password);
+  digitalWrite(wifiLed, LOW);
   if (!res)
   {
     Serial.println("Failed to connect");
+    wm.resetSettings();
   }
   else
   {
@@ -72,7 +77,7 @@ void connectMqtt() {
     Serial.print(" as ");
     Serial.println(clientName);
 
-    if (client.connect((char*)clientName.c_str())) {
+     if  (client.connect("esp8266-", mqttUser, mqttPass)) {
       //if (client.connect((char*) clientName.c_str()), mqtt_user, mqtt_password)) {
       Serial.println("connected");
       digitalWrite(mqttLed, HIGH);
@@ -100,46 +105,31 @@ void MQTTcallback(char* topic, byte* payload, unsigned int length) {
   }
   Serial.println(message);
 
-  if (topic == SUB_PUM_Manual){
+  if (String(topic) == SUB_PUM_Manual){
     if (message == "on") {
     digitalWrite(Relay, HIGH);
     Serial.println("Perd nam");
   }
-  if (message == "off") {
+ else  if (message == "off") {
     digitalWrite(Relay, LOW);
     Serial.println("Pid nam");
     total = 0;
     }
   }
 
-  if (topic == SUB_PUM_Auto){
+ else if (String(topic) == SUB_PUM_Auto){
     if (message == "on"){
-
-      if ( hour() == 6 ){
-    if (minute() >= 0 && minute() < 2){
-      digitalWrite(Relay, HIGH);
-      }
-    else {
-    digitalWrite(Relay, LOW);
-    total = 0;
+        SWauto = "on";
     }
-}
-
-  if ( hour() == 17 ){
-    if (minute() >= 30 && minute() < 32){
-      digitalWrite(Relay, HIGH);
-      }
-  else {
-    digitalWrite(Relay, LOW);
-    total = 0;
-  }
-}
+    else if (message == "off"){
+      SWauto = "off";
     }
-  }
-
+ }
   Serial.println();
   Serial.println("-----------------------");
+
 }
+
 
 void digitalClockDisplay()
 {
@@ -252,9 +242,34 @@ time_t prevDisplay = 0;
 void SwAuto(){
    if (SWauto == "on")
     { 
-      client.publish(SUB_PUM_Auto, "on");
+       if ( hour() == 6 ){
+    if (minute() >= 0 && minute() < 2){
+      digitalWrite(Relay, HIGH);
+      }
+    else {
+    digitalWrite(Relay, LOW);
+    total = 0;
     }
 }
+
+
+  if ( hour() == 17 ){
+    if (minute() >= 30 && minute() < 32){
+      digitalWrite(Relay, HIGH);
+      }
+  else {
+    digitalWrite(Relay, LOW);
+    total = 0;
+  }
+}
+    }
+    if (SWauto == "off") {
+    digitalWrite(Relay, LOW);
+    Serial.println("Pid nam");
+    total = 0;
+    }
+  }
+
 
 void loop() {
   if (!client.connected())
@@ -287,15 +302,21 @@ void loop() {
   }
   
   Serial.print("volume: ");
-  Serial.printf("%.2f", volume, DEC);
+  Serial.print(volume, DEC);
   Serial.println(" mL/s");
-  client.publish(PUB_Waterflow, String(volume).c_str(), true);
+ // client.publish(PUB_Waterflow, String(volume).c_str(), true);
 
   Serial.print("total: ");
-  Serial.printf("%.2f", total, DEC);
+  Serial.print(total, DEC);
   Serial.println(" mL");
-  Serial.printf("\n-------------------------\n");
+  Serial.println("-------------------------");
+  Serial.println();
 
+   String Volume = String(volume).c_str();
+   String pub_volume =  "{\"Volume\":" + Volume + "}";
+   char msg_volume[50];
+   pub_volume.toCharArray(msg_volume, (pub_volume.length() +1));
+   client.publish(PUB_Waterflow, msg_volume);
 
     }  
 }  // end void loop
